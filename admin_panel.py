@@ -1,21 +1,20 @@
 import telebot
 from database import User, session
 
-# إعداد التوكن للبوت (يجب أن يكون مطابقًا في جميع الملفات)
 TOKEN = '6738622070:AAHUoREqWOslqh3rol3BekbgRKuWdwQZmQ8'
 bot = telebot.TeleBot(TOKEN)
 
-# التحكم بلوحة الأدمن
+
 def admin_panel(message):
-    if message.chat.id == 6023224495:  # تأكيد أن المستخدم هو الأدمن
+    if message.chat.id == 6023224495:  
         bot.send_message(message.chat.id, "مرحبا بك في لوحة التحكم. استخدم /add_points أو /deduct_points لتعديل نقاط المستخدم.")
     else:
         bot.send_message(message.chat.id, "ليس لديك وصول إلى هذا القسم.")
 
-# التعامل مع أمر إضافة النقاط
+
 @bot.message_handler(commands=['add_points'])
 def add_points(message):
-    if message.chat.id == 6023224495:  # تأكيد أن المستخدم هو الأدمن
+    if message.chat.id == 6023224495:  
         try:
             _, user_id, points = message.text.split()
             user = session.query(User).filter_by(id=int(user_id)).first()
@@ -30,7 +29,7 @@ def add_points(message):
     else:
         bot.send_message(message.chat.id, "ليس لديك وصول إلى هذا الأمر.")
 
-# التعامل مع أمر اقتطاع النقاط
+
 @bot.message_handler(commands=['deduct_points'])
 def deduct_points(message):
     if message.chat.id == 6023224495:  # تأكيد أن المستخدم هو الأدمن
@@ -50,10 +49,10 @@ def deduct_points(message):
     else:
         bot.send_message(message.chat.id, "ليس لديك وصول إلى هذا الأمر.")
 
-# التعامل مع أمر /id
+
 @bot.message_handler(commands=['id'])
 def get_user_id(message):
     user_id = message.chat.id
     bot.send_message(message.chat.id, f"معرف المستخدم الخاص بك هو: {user_id}")
 
-# تشغيل البوت
+
