@@ -6,7 +6,6 @@ from admin_panel import admin_panel
 TOKEN = '6738622070:AAHUoREqWOslqh3rol3BekbgRKuWdwQZmQ8'
 bot = telebot.TeleBot(TOKEN)
 
-# إعداد الترجمات
 translations = {
     'english': {
         'welcome': "Welcome to the bot! Please select your language:",
@@ -78,25 +77,22 @@ translations = {
     }
 }
 
-# مستويات المستخدم
 levels = [100, 1000, 10000, 50000, 100000, 200000, 400000, 800000, 1600000, 3200000, 6400000, 12800000, 25600000, 51200000, 102400000]
 
-# الحصول على الترجمة
 def get_translation(chat_id, key):
     user = session.query(User).filter_by(id=chat_id).first()
     if user and user.language in translations:
         return translations[user.language][key]
-    return translations['english'][key]  # الافتراضي هو اللغة الإنجليزية
+    return translations['english'][key]  
 
-# تحديث مستوى المستخدم
 def update_user_level(user):
     for i, level_threshold in enumerate(levels):
         if user.points < level_threshold:
             user.level = i + 1
             break
     else:
-        user.level = len(levels)  # أعلى مستوى
-# البداية
+        user.level = len(levels)  
+
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.InlineKeyboardMarkup()
@@ -114,63 +110,60 @@ def set_language(call):
         user.language = lang
         session.commit()
     else:
-        new_user = User(id=call.message.chat.id, language=lang, level=1, points=0)  # إضافة المستوى الافتراضي
+        new_user = User(id=call.message.chat.id, language=lang, level=1, points=0)  
         session.add(new_user)
         session.commit()
 
-    # تأكيد اللغة وإظهار الرسالة الرئيسية مع جميع الخيارات
+   
     bot.send_message(call.message.chat.id, get_translation(call.message.chat.id, 'language_set'))
     show_main_menu(call.message)
 
 def show_main_menu(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     
-    # زر التجميع
     collect_button = types.KeyboardButton(get_translation(message.chat.id, 'collect_button'))
     markup.add(collect_button)
 
-    # زر رفع مستوى التجميع
     upgrade_button = types.KeyboardButton(get_translation(message.chat.id, 'upgrade_button'))
     markup.add(upgrade_button)
     
-    # زر لوحة التحكم (للأدمن فقط)
+    
     if message.chat.id == 6023224495:
         admin_button = types.KeyboardButton(get_translation(message.chat.id, 'admin_button'))
         markup.add(admin_button)
     
-    # زر التواصل مع الأدمن
+    
     contact_button = types.KeyboardButton(get_translation(message.chat.id, 'contact_button'))
     markup.add(contact_button)
     
-    # زر صندوق الشكاوى
+    
     complaint_button = types.KeyboardButton(get_translation(message.chat.id, 'complaint_button'))
     markup.add(complaint_button)
     
     bot.send_message(message.chat.id, get_translation(message.chat.id, 'start_using'), reply_markup=markup)
 
-# التعامل مع زر التجميع
+
 @bot.message_handler(func=lambda message: message.text == get_translation(message.chat.id, 'collect_button'))
 def click_button(message):
     user = session.query(User).filter_by(id=message.chat.id).first()
     if user:
-        user.points += 1 * user.level  # إضافة النقاط مع الترقية
+        user.points += 1 * user.level  
         update_user_level(user)
         session.commit()
         bot.send_message(message.chat.id, get_translation(message.chat.id, 'points').format(points=user.points, level=user.level))
     else:
         bot.send_message(message.chat.id, "Please set your language first using /start")
 
-# التعامل مع زر رفع مستوى التجميع
 @bot.message_handler(func=lambda message: message.text == get_translation(message.chat.id, 'upgrade_button'))
 def upgrade_button(message):
     user = session.query(User).filter_by(id=message.chat.id).first()
     if user:
         next_level = user.level + 1
         if next_level <= len(levels):
-            needed_points = levels[next_level - 1] - levels[user.level - 1]  # النقاط المطلوبة للترقية إلى المستوى التالي
+            needed_points = levels[next_level - 1] - levels[user.level - 1]  
             if user.points >= needed_points:
-                user.points -= needed_points  # خصم النقاط المطلوبة للترقية
-                user.level = next_level  # ترقية المستوى
+                user.points -= needed_points 
+                user.level = next_level  
                 session.commit()
                 bot.send_message(message.chat.id, get_translation(message.chat.id, 'upgrade_successful').format(level=user.level))
             else:
@@ -180,12 +173,12 @@ def upgrade_button(message):
     else:
         bot.send_message(message.chat.id, "Please set your language first using /start")
 
-# التعامل مع زر لوحة التحكم
+
 @bot.message_handler(func=lambda message: message.text == get_translation(message.chat.id, 'admin_button'))
 def admin(message):
     admin_panel(message)
 
-# التعامل مع زر التواصل مع الأدمن
+
 @bot.message_handler(func=lambda message: message.text == get_translation(message.chat.id, 'contact_button'))
 def contact_admin(message):
     bot.send_message(message.chat.id, get_translation(message.chat.id, 'contact_message'))
@@ -195,7 +188,6 @@ def forward_to_admin(message):
     bot.send_message(6023224495, f"Message from {message.chat.username}: {message.text}")
     bot.send_message(message.chat.id, get_translation(message.chat.id, 'message_sent'))
 
-# التعامل مع زر صندوق الشكاوى
 @bot.message_handler(func=lambda message: message.text == get_translation(message.chat.id, 'complaint_button'))
 def complaint_box(message):
     bot.send_message(message.chat.id, get_translation(message.chat.id, 'enter_complaint'))
